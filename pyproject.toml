@@ -1,0 +1,27 @@
+[project]
+name = "citadel"
+version = "2.0.0"
+description = "Citadel — Multi-Agent AI Defense Council with Oversight, Governance, Adversary Curriculum, and Trust Dynamics (OpenEnv)"
+requires-python = ">=3.10"
+dependencies = [
+    "openenv-core[core]>=0.2.2",
+    "fastapi>=0.115.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.24.0",
+    "requests>=2.31.0",
+    "openai>=1.0.0",
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "app", "models", "dynamics", "reward", "baseline", "tasks",
+    "environment", "oversight_env", "inference", "client",
+    "governance", "adversary", "trust", "playbook",
+]
