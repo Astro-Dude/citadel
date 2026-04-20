@@ -274,16 +274,51 @@ class Playbook:
     # --- export ------------------------------------------------------------
 
     def as_markdown(self) -> str:
-        """Human-readable dump — useful for demos and judge review."""
+        """Human-readable dump — useful for demos and judge review.
+
+        Lessons are grouped by the adversary generation that spawned them
+        (so the document reads as a curriculum diary), sorted by utility
+        inside each group, with wins/losses/citations broken out.
+        """
         if not self._lessons:
             return "_(playbook is empty)_"
-        lines = ["# Citadel Council Playbook", ""]
-        for ls in sorted(self._lessons, key=lambda x: x.utility, reverse=True):
-            tags = " ".join(f"`{t}`" for t in ls.tags)
-            lines.append(
-                f"- **{ls.lesson_id}** (utility {ls.utility:+.2f}, "
-                f"cited {ls.citations}×): {ls.text}  \n  {tags}"
-            )
+
+        total = len(self._lessons)
+        positive = sum(1 for ls in self._lessons if ls.utility > 0)
+        cited = sum(1 for ls in self._lessons if ls.citations > 0)
+        avg_utility = sum(ls.utility for ls in self._lessons) / total
+
+        lines: List[str] = [
+            "# Citadel Council Playbook",
+            "",
+            f"_{total} lessons · {positive} with positive utility · "
+            f"{cited} cited at least once · avg utility {avg_utility:+.2f}_",
+            "",
+        ]
+
+        by_gen: Dict[int, List[Lesson]] = {}
+        for ls in self._lessons:
+            by_gen.setdefault(ls.adversary_gen, []).append(ls)
+
+        gen_names = {1: "Script Kiddie", 2: "Adaptive", 3: "Deceptive APT"}
+        for gen in sorted(by_gen.keys()):
+            lessons = sorted(by_gen[gen], key=lambda x: x.utility, reverse=True)
+            n = len(lessons)
+            noun = "lesson" if n == 1 else "lessons"
+            lines.append(f"## Gen {gen} — {gen_names.get(gen, 'Unknown')}  ({n} {noun})")
+            lines.append("")
+            for ls in lessons:
+                tags = " ".join(f"`{t}`" for t in ls.tags)
+                provenance = f"task `{ls.task_id or 'unknown'}` · hour {ls.hour}"
+                stats = (
+                    f"utility {ls.utility:+.2f} · "
+                    f"{ls.wins}W/{ls.losses}L · cited {ls.citations}×"
+                )
+                lines.append(f"- **{ls.lesson_id}** — {ls.text}")
+                lines.append(f"  _{stats} · {provenance}_  ")
+                lines.append(f"  {tags}")
+            lines.append("")
+
         return "\n".join(lines)
 
 
