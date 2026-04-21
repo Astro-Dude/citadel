@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Citadel runtime artifacts (NOT the committed judge artifact playbook_export.md)
+playbook.json
+playbook_demo.json
+checkpoints/
+runs/
+wandb/
+*.ckpt
+*.pt
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
