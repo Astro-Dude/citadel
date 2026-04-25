@@ -29,7 +29,9 @@ Thumbs.db
 playbook.json
 playbook_demo.json
 checkpoints/
-runs/
+runs/*/
+runs/*.json
+runs/*.md
 wandb/
 *.ckpt
 *.pt
