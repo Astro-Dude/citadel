@@ -169,8 +169,21 @@ def tasks_for_step(step: int):
 # This is correct because each prompt in the dataset is a step-0 observation.
 # ---------------------------------------------------------------------------
 
+_outcome_parse_failures = 0
+_outcome_calls = 0
+
 def _outcome_reward(task_id: str, adversary_gen: int, seed: int, completion: str) -> float:
     """Run one env step with the parsed action, return commander step reward."""
+    global _outcome_parse_failures, _outcome_calls
+    _outcome_calls += 1
+    try:
+        action = parse_commander_response(completion)
+    except Exception as e:
+        _outcome_parse_failures += 1
+        if _outcome_calls % 20 == 0:
+            pct = 100 * _outcome_parse_failures / _outcome_calls
+            print(f"[reward] parse failures: {_outcome_parse_failures}/{_outcome_calls} ({pct:.0f}%)")
+        return -0.5
     try:
         env = CitadelEnvironment(
             oversight_policy=oversight_rule_based,
@@ -178,13 +191,11 @@ def _outcome_reward(task_id: str, adversary_gen: int, seed: int, completion: str
             investor_model_name=GEMINI_MODEL if INVESTOR_LLM else "",
         )
         env.reset(task_id=task_id, seed=seed, adversary_gen=adversary_gen)
-        action = parse_commander_response(completion)
         obs = env.step(action)
         r = float(obs.reward or 0.0)
-        # Clip to [-1, 1] to keep gradients stable
         return max(-1.0, min(1.0, r))
-    except Exception:
-        return -0.5
+    except Exception as e:
+        return -0.3
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +231,8 @@ def _format_reward(completion: str) -> float:
 # TRL passes: prompts (list[str]), completions (list[str]), **metadata columns
 # ---------------------------------------------------------------------------
 
+_reward_call_count = 0
+
 def commander_reward_fn(
     prompts: List[str],
     completions: List[str],
@@ -228,7 +241,10 @@ def commander_reward_fn(
     seed: List[int] = None,
     **kwargs,
 ) -> List[float]:
+    global _reward_call_count
+    _reward_call_count += 1
     rewards = []
+    outcomes, formats = [], []
     for i, (prompt, completion) in enumerate(zip(prompts, completions)):
         tid = (task_id[i] if task_id else "easy_1")
         gen = int(adversary_gen[i] if adversary_gen else 1)
@@ -236,10 +252,20 @@ def commander_reward_fn(
 
         r_outcome = _outcome_reward(tid, gen, s, completion)
         r_format = _format_reward(completion)
+        outcomes.append(r_outcome)
+        formats.append(r_format)
 
-        # Weighted sum — outcome dominates but format can't be zero
         total = 0.75 * r_outcome + 0.25 * r_format
         rewards.append(float(total))
+
+    # Log every 5 calls so we can see what the model is actually producing
+    if _reward_call_count % 5 == 1:
+        import statistics
+        std = statistics.stdev(rewards) if len(rewards) > 1 else 0.0
+        print(f"[reward_fn] call={_reward_call_count} n={len(rewards)} "
+              f"outcomes={[round(x,3) for x in outcomes]} "
+              f"formats={[round(x,3) for x in formats]} "
+              f"total_std={std:.4f}")
     return rewards
 
 
@@ -452,9 +478,9 @@ def train_commander():
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
         learning_rate=5e-6,
-        num_generations=4,          # 4 rollouts keeps step time ~25s on T4
-        max_completion_length=256,  # enough for JSON + justification without blowing up step time
-        temperature=1.2,            # higher than 1.0 to force diversity without needing 8 gens
+        num_generations=6,          # balance: enough diversity, not too slow on T4
+        max_completion_length=300,  # enough for JSON + justification
+        temperature=1.1,            # slightly above 1.0 for output diversity
         logging_steps=5,
         save_steps=max(1, MAX_STEPS // 4),
         report_to="none",
@@ -655,9 +681,9 @@ def train_oversight(commander_path: str = None):
         per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
         learning_rate=5e-6,
-        num_generations=4,
-        max_completion_length=256,
-        temperature=1.2,
+        num_generations=6,
+        max_completion_length=300,
+        temperature=1.1,
         logging_steps=5,
         save_steps=max(1, MAX_STEPS // 4),
         report_to="none",
