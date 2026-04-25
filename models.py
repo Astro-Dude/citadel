@@ -537,6 +537,8 @@ class IncidentObservation(Observation):
     shared_playbook: List[Dict[str, Any]] = Field(default_factory=list)
     adversary_gen: int = 1
     last_oversight_critique: Dict[str, Any] = Field(default_factory=dict)
+    done: bool = False
+    reward: Optional[float] = None
 
 
 class OversightObservation(Observation):
