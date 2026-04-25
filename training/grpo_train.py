@@ -401,6 +401,10 @@ def save_reward_curve(log_history: list, save_dir: Path, tag: str):
     rewards = [x.get("reward") for x in log_history if x.get("reward") is not None]
     curve_path = save_dir / f"{tag}_reward_curve.json"
     curve_path.write_text(json.dumps(rewards, indent=2))
+    # Save full step logs (grad_norm, reward_std, kl, etc.)
+    logs_path = save_dir / f"{tag}_train_logs.json"
+    logs_path.write_text(json.dumps(log_history, indent=2))
+    print(f"[curve] full logs saved → {logs_path}")
     print(f"[curve] saved {len(rewards)} points → {curve_path}")
 
     try:
@@ -540,9 +544,12 @@ def _oversight_outcome_reward(task_id: str, gen: int, seed: int, completion: str
 
         ov_action = parse_oversight_response(completion)
         obs = env.step(proposal_action, oversight_action=ov_action)
-        r = float((obs.metadata or {}).get("oversight_reward", 0.0))
+        # oversight_reward is in obs.reward (same field as commander)
+        r = float(obs.reward or 0.0)
         return max(-1.0, min(1.0, r))
-    except Exception:
+    except Exception as e:
+        import traceback
+        print(f"[oversight_reward] env crash: {e}\n{traceback.format_exc()[:400]}")
         return -0.3
 
 
