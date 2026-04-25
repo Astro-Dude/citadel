@@ -1,0 +1,14 @@
+spec_version: 1
+name: citadel
+type: space
+runtime: fastapi
+app: server.app:main
+port: 7860
+description: >
+  Citadel — Multi-Agent AI Defense Council. Two LLMs (Commander + Oversight)
+  defend an 8-system network against an evolving adversary curriculum, under
+  enterprise governance (ServiceNow, SOX, PagerDuty, Data Owner notification,
+  GDPR timer), while maintaining bidirectional trust and a shared lessons
+  playbook. Covers Themes 1 (Multi-Agent, Fleet AI Scalable Oversight),
+  3.1 (Professional / Scaler AI Labs Multi-App Enterprise), 4 (Self-Improvement
+  via adversary curriculum + playbook), and 5 (Wild Card — trust dynamics).
