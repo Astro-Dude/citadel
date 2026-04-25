@@ -76,6 +76,21 @@ python inference.py
 
 If no Docker image / HF Space is reachable, `inference.py` falls back to an in-process `LocalEnv` — the validator flow still works end-to-end.
 
+## Demo artifact (no-LLM playbook preview)
+
+For judges who want to see the shared playbook without provisioning an LLM, we ship a deterministic baseline runner:
+
+```bash
+python scripts/demo_export.py
+```
+
+This drives a naive Commander (rotating actions across data and non-data systems) and a rule-based *teaching* Oversight (real critiques + situational `lesson_text`) over all three tasks across adversary Gens 1/2/3, then writes:
+
+- [playbook_export.md](playbook_export.md) — human-readable playbook grouped by adversary generation, with per-lesson utility, wins/losses, citation count, and provenance (task + hour). The header table summarizes steps and data exfiltrated per run.
+- [playbook_demo.json](playbook_demo.json) — raw lesson state, kept separate from the production `playbook.json` so the demo never clobbers a trained council's memory.
+
+The export is the *floor* — it shows what the council captures with zero training. Trained weights produce richer, more cited lessons.
+
 ## Pre-submission validation
 
 Citadel preserves all of Bastion's OpenEnv compliance:
@@ -99,7 +114,7 @@ Citadel/
 ├── models.py               # Pydantic action/obs/state types + new Council types
 ├── governance.py           # 6 enterprise-app simulators + pre-req + compliance score
 ├── trust.py                # Bidirectional trust dynamics (Theme 5)
-├── playbook.py             # Shared lessons memory (second Theme 4 hook)
+├── playbook.py             # Shared lessons memory + as_markdown() export (Theme 4 hook)
 ├── adversary.py            # 3 adversary generations (Theme 4 curriculum)
 ├── dynamics.py             # Bastion attacker + team comms + forensic report
 ├── environment.py          # Two-agent council step loop
@@ -110,6 +125,9 @@ Citadel/
 ├── client.py               # CitadelEnv OpenEnv client
 ├── inference.py            # Drives both LLMs through 3 tasks
 ├── server/app.py           # FastAPI server
+├── scripts/demo_export.py  # Baseline runner that emits the judge artifact below
+├── playbook_export.md      # Generated: human-readable playbook from baseline run
+├── playbook_demo.json      # Generated: raw lesson state for the demo (not production)
 ├── Dockerfile, openenv.yaml, pyproject.toml, requirements.txt
 └── training/               # Notebooks for Commander + Oversight + curriculum + trust
 ```
@@ -118,7 +136,7 @@ Citadel/
 
 - **40% Environment Innovation** — Council protocol + shared playbook + bidirectional trust are each novel; the combination is genuinely unpublished.
 - **30% Storytelling** — Demo contrasts untrained pair (trust collapse, bypass, 60% data loss) vs trained pair (clean, governance-compliant, <10% data loss).
-- **20% Showing Improvement** — Two reward curves, a 3×generation performance matrix, a trust-evolution plot, a growing playbook.
+- **20% Showing Improvement** — Two reward curves, a 3×generation performance matrix, a trust-evolution plot, a growing playbook (see [playbook_export.md](playbook_export.md) for the untrained baseline).
 - **10% Reward / Training Pipeline** — Coherent multi-layer reward with clear ablation hooks; two-phase training (freeze Commander → train Oversight) reuses proven Bastion v1 recipe.
 
 ---
