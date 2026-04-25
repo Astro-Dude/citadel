@@ -195,6 +195,8 @@ def _outcome_reward(task_id: str, adversary_gen: int, seed: int, completion: str
         r = float(obs.reward or 0.0)
         return max(-1.0, min(1.0, r))
     except Exception as e:
+        import traceback
+        print(f"[reward] env crash: {e}\n{traceback.format_exc()[:600]}")
         return -0.3
 
 
