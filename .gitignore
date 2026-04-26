@@ -48,4 +48,4 @@ stitch_citadel_command_center/
 .env
 .env.*
 !.env.example
-docs/results/*.png
+
