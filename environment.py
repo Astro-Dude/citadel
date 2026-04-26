@@ -873,6 +873,7 @@ class CitadelEnvironment(Environment[IncidentAction, IncidentObservation, Incide
             shared_playbook=[ls.to_obs_dict() for ls in lessons],
             last_oversight_critique=self._last_critique,
         )
+        obs.oversight_reward = oversight_reward
         return obs
 
     # --- helpers ----------------------------------------------------------

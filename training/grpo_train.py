@@ -544,8 +544,7 @@ def _oversight_outcome_reward(task_id: str, gen: int, seed: int, completion: str
 
         ov_action = parse_oversight_response(completion)
         obs = env.step(proposal_action, oversight_action=ov_action)
-        # oversight_reward is in obs.reward (same field as commander)
-        r = float(obs.reward or 0.0)
+        r = float(obs.oversight_reward or 0.0)
         return max(-1.0, min(1.0, r))
     except Exception as e:
         import traceback

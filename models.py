@@ -539,6 +539,7 @@ class IncidentObservation(Observation):
     last_oversight_critique: Dict[str, Any] = Field(default_factory=dict)
     done: bool = False
     reward: Optional[float] = None
+    oversight_reward: Optional[float] = None
 
 
 class OversightObservation(Observation):
