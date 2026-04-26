@@ -21,6 +21,16 @@ tags:
 
 > Bastion defended. Sentinel supervised. **Citadel is an LLM council** that governs, critiques, co-evolves, and earns trust.
 
+**[🚀 Live Demo](https://huggingface.co/spaces/Astro-Dude/citadel)** | **[📊 Training Results](docs/results.md)** | **[📖 Training Guide](docs/training.md)**
+
+### Training Results (Qwen2.5-3B-Instruct, 120 steps GRPO)
+| Phase | Before Training | After Training | Improvement |
+|-------|----------------|----------------|-------------|
+| Commander | -0.326 (env crash) | +0.082 avg | **+0.41** |
+| Oversight | -0.145 (wrong reward) | +0.134 avg | **+0.28** |
+
+![Commander Reward Curve](docs/results/commander_reward_curve.png)
+
 Citadel is the Round 2 submission for the Meta PyTorch × Scaler OpenEnv Hackathon. It extends our Round 1 project (Bastion) into a full enterprise SOC environment: two LLMs cooperate through a structured critique protocol, under real enterprise governance constraints, against four generations of adversary, while maintaining bidirectional trust and a shared lessons playbook.
 
 ## Why a council, not a gate
