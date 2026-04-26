@@ -19,14 +19,14 @@ Outputs:
 from __future__ import annotations
 
 import os
+import random
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from baseline import naive_policy
 from environment import CitadelEnvironment, default_oversight_policy
 from models import (
     IncidentAction,
@@ -36,8 +36,16 @@ from models import (
     OversightDecision,
     SYSTEM_NAMES,
 )
-from playbook import reset_default_playbook
+from playbook import (
+    Playbook,
+    SYSTEM_TYPE_TAGS,
+    ADVERSARY_GEN_TAGS,
+    reset_default_playbook,
+)
 from governance import DESTRUCTIVE_BASTION_ACTIONS, DATA_HOLDING_SYSTEMS
+
+# Deterministic artifact: same input -> same output across commits.
+DEMO_SEED = 4242
 
 
 TASK_PLAN = [
@@ -130,13 +138,64 @@ def teaching_oversight(
     return base
 
 
-def naive_proposal(state: IncidentState, hour: int) -> IncidentAction:
+def _pick_relevant_lesson(
+    playbook: Playbook,
+    adversary_gen: int,
+    target_name: str,
+    rng: random.Random,
+) -> Optional[str]:
+    """Return a lesson_id from `playbook` that matches the current context, or None.
+
+    The production `Playbook.retrieve()` sorts by tag overlap × utility ×
+    last-used time, where `utility` and `last_used_ts` both come from
+    `time.time()` and so differ by sub-millisecond deltas across runs.
+    For a *commit-stable* judge artifact we skip `retrieve()` and rank
+    candidates ourselves with a fully-deterministic tiebreaker
+    (`lesson_id`). Production callers should still use `retrieve()` —
+    real-time recency is the right signal there.
+
+    Exercising `record_outcome` happens automatically inside the env when
+    a cited lesson appears in `IncidentAction.cited_lessons`, so picking
+    *any* relevant lesson is enough to populate wins/losses.
+    """
+    if len(playbook) == 0:
+        return None
+    query_tags = {ADVERSARY_GEN_TAGS.get(adversary_gen, "gen_1_script")}
+    if target_name in SYSTEM_TYPE_TAGS:
+        query_tags.add(SYSTEM_TYPE_TAGS[target_name])
+
+    ranked = sorted(
+        playbook.all(),
+        key=lambda ls: (
+            -len(query_tags & set(ls.tags)),  # primary: more overlap first
+            ls.lesson_id,                      # secondary: deterministic
+        ),
+    )
+    # Drop lessons with zero tag overlap.
+    candidates = [ls for ls in ranked if query_tags & set(ls.tags)]
+    if not candidates:
+        return None
+    if rng.random() > 0.60:
+        return None
+    return rng.choice(candidates[:4]).lesson_id
+
+
+def naive_proposal(
+    state: IncidentState,
+    hour: int,
+    playbook: Optional[Playbook] = None,
+    rng: Optional[random.Random] = None,
+) -> IncidentAction:
     """Demo proposal generator — rotates actions AND covers data systems.
 
     The upstream `naive_policy` rotates targets by hour-index, which in
     practice never lands ISOLATE on a data system. We pair action and
     target so the council actually exercises destructive-on-data cases
     (where the interesting lessons live).
+
+    When a playbook is supplied, the proposal cites a contextually
+    relevant lesson on ~60% of steps, exercising the citation/utility
+    pathway end-to-end.
     """
     from models import ActionType
 
@@ -157,19 +216,34 @@ def naive_proposal(state: IncidentState, hour: int) -> IncidentAction:
         target = other_targets[hour % len(other_targets)]
 
     target_name = SYSTEM_NAMES[target] if 0 <= target < len(SYSTEM_NAMES) else ""
+
+    cited: List[str] = []
+    if playbook is not None and rng is not None:
+        lid = _pick_relevant_lesson(playbook, state.adversary_gen, target_name, rng)
+        if lid is not None:
+            cited.append(lid)
+
     return IncidentAction(
         action=int(action),
         target_system=target,
         justification=f"Baseline rotation: {action.name.lower()} on {target_name} at hour {hour}.",
-        cited_lessons=[],
+        cited_lessons=cited,
     )
 
 
-def run_episode(env: CitadelEnvironment, task_id: str, adversary_gen: int) -> Dict[str, Any]:
+def run_episode(
+    env: CitadelEnvironment,
+    task_id: str,
+    adversary_gen: int,
+    rng: random.Random,
+) -> Dict[str, Any]:
     obs = env.reset(task_id=task_id, adversary_gen=adversary_gen)
     steps = 0
+    citations_issued = 0
     for hour in range(12):
-        action = naive_proposal(env._state, hour)
+        action = naive_proposal(env._state, hour, playbook=env._playbook, rng=rng)
+        if action.cited_lessons:
+            citations_issued += 1
         obs = env.step(action)
         steps += 1
         if obs.done:
@@ -201,10 +275,16 @@ def run_episode(env: CitadelEnvironment, task_id: str, adversary_gen: int) -> Di
         "steps": steps,
         "data_exfiltrated": round(exfil, 3),
         "outcome": outcome,
+        "citations_issued": citations_issued,
     }
 
 
 def main() -> None:
+    # Reproducibility: seed every RNG the demo touches so the artifact is
+    # commit-stable. The env reseeds its own RNG per task from task config.
+    random.seed(DEMO_SEED)
+    rng = random.Random(DEMO_SEED)
+
     # Fresh, isolated playbook — don't clobber production ./playbook.json
     demo_path = str(REPO_ROOT / "playbook_demo.json")
     if os.path.exists(demo_path):
@@ -215,15 +295,23 @@ def main() -> None:
 
     summaries: List[Dict[str, Any]] = []
     for task_id, gen in TASK_PLAN:
-        summary = run_episode(env, task_id, gen)
+        summary = run_episode(env, task_id, gen, rng)
         summaries.append(summary)
         print(
             f"  ran {task_id} | Gen {gen} -> {summary['steps']} steps, "
-            f"exfil={summary['data_exfiltrated']}",
+            f"exfil={summary['data_exfiltrated']}, "
+            f"citations={summary['citations_issued']}",
             flush=True,
         )
 
     playbook.save()
+
+    # Aggregate citation/utility stats — these are what makes the artifact
+    # demonstrate the playbook *mechanic*, not just lesson text.
+    total_citations = sum(ls.citations for ls in playbook.all())
+    total_wins = sum(ls.wins for ls in playbook.all())
+    total_losses = sum(ls.losses for ls in playbook.all())
+    cited_lessons = sum(1 for ls in playbook.all() if ls.citations > 0)
 
     out_path = REPO_ROOT / "playbook_export.md"
     header = [
@@ -236,19 +324,33 @@ def main() -> None:
         "",
         "## Runs",
         "",
-        "| Task | Adversary Gen | Steps | Data Exfiltrated |",
-        "|---|---|---|---|",
+        "| Task | Adversary Gen | Steps | Data Exfiltrated | Lessons Cited |",
+        "|---|---|---|---|---|",
     ]
     for s in summaries:
         header.append(
-            f"| `{s['task_id']}` | Gen {s['adversary_gen']} | {s['steps']} | {s['data_exfiltrated']} |"
+            f"| `{s['task_id']}` | Gen {s['adversary_gen']} | {s['steps']} | "
+            f"{s['data_exfiltrated']} | {s['citations_issued']} |"
         )
-    header.append("")
+    header.extend([
+        "",
+        "## Playbook mechanic — end-of-run snapshot",
+        "",
+        f"- {cited_lessons} of {len(playbook)} lessons cited at least once",
+        f"- {total_citations} total citations across the council's runs",
+        f"- {total_wins}W / {total_losses}L on cited lessons "
+        f"(env auto-records via `Playbook.record_outcome` on each cited step)",
+        "",
+    ])
 
     body = playbook.as_markdown()
     out_path.write_text("\n".join(header) + "\n" + body + "\n", encoding="utf-8")
 
-    print(f"\nWrote {out_path.relative_to(REPO_ROOT)} ({len(playbook)} lessons)")
+    print(
+        f"\nWrote {out_path.relative_to(REPO_ROOT)} "
+        f"({len(playbook)} lessons, {total_citations} citations, "
+        f"{total_wins}W/{total_losses}L)"
+    )
 
 
 if __name__ == "__main__":

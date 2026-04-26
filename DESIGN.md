@@ -1,5 +1,15 @@
 # Citadel — Design Document
 
+> **Note on freshness.** This document captures the original design rationale
+> (April 2026) and is preserved as a record of *why* each piece exists. The
+> system has since grown to include a Gen 4 live-LLM adversary, a stakeholder
+> events layer, a `hard_2` deception-catch task, an ablation harness, and a
+> richer multi-layer reward function with severity ramping and Laplace-smoothed
+> precision. **For the current state of the system, see [README.md](README.md)
+> as the source of truth.** The *design choices* and *rationale* below remain
+> accurate; the *counts* (3 tasks, 3 generations, the specific reward weights
+> in this doc) are superseded.
+
 ## Why this project exists
 
 Enterprise AI deployment is blocked on three problems that Citadel addresses simultaneously:
