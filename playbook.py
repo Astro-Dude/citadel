@@ -276,9 +276,14 @@ class Playbook:
     def as_markdown(self) -> str:
         """Human-readable dump — useful for demos and judge review.
 
-        Lessons are grouped by the adversary generation that spawned them
-        (so the document reads as a curriculum diary), sorted by utility
-        inside each group, with wins/losses/citations broken out.
+        Sections (each rendered only when it has signal):
+          1. Header stats — counts, positive-utility share, citations.
+          2. **Top cited** — only when ≥1 lesson has citations > 0. Shows
+             that the citation/wins/losses mechanic is live, not vestigial.
+          3. **Tag distribution** — top tags across the corpus, so the
+             reader can see which contexts the playbook covers.
+          4. **By adversary generation** — the curriculum diary, sorted
+             by utility within each group.
         """
         if not self._lessons:
             return "_(playbook is empty)_"
@@ -286,26 +291,72 @@ class Playbook:
         total = len(self._lessons)
         positive = sum(1 for ls in self._lessons if ls.utility > 0)
         cited = sum(1 for ls in self._lessons if ls.citations > 0)
+        total_citations = sum(ls.citations for ls in self._lessons)
+        total_wins = sum(ls.wins for ls in self._lessons)
+        total_losses = sum(ls.losses for ls in self._lessons)
         avg_utility = sum(ls.utility for ls in self._lessons) / total
 
         lines: List[str] = [
             "# Citadel Council Playbook",
             "",
             f"_{total} lessons · {positive} with positive utility · "
-            f"{cited} cited at least once · avg utility {avg_utility:+.2f}_",
+            f"{cited} cited at least once · {total_citations} total citations · "
+            f"{total_wins}W/{total_losses}L · avg utility {avg_utility:+.2f}_",
             "",
         ]
 
+        # 2. Top cited — only render if any lesson has citations
+        cited_lessons = [ls for ls in self._lessons if ls.citations > 0]
+        if cited_lessons:
+            top = sorted(
+                cited_lessons,
+                key=lambda x: (x.citations, x.utility),
+                reverse=True,
+            )[:5]
+            lines.append("## Top cited")
+            lines.append("")
+            lines.append("| Lesson | Citations | W/L | Utility |")
+            lines.append("|---|---|---|---|")
+            for ls in top:
+                preview = ls.text if len(ls.text) <= 80 else ls.text[:77] + "..."
+                lines.append(
+                    f"| **{ls.lesson_id}** — {preview} | {ls.citations} | "
+                    f"{ls.wins}W/{ls.losses}L | {ls.utility:+.2f} |"
+                )
+            lines.append("")
+
+        # 3. Tag distribution — top 8 tags by frequency
+        tag_counts: Dict[str, int] = {}
+        for ls in self._lessons:
+            for t in ls.tags:
+                tag_counts[t] = tag_counts.get(t, 0) + 1
+        if tag_counts:
+            top_tags = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)[:8]
+            lines.append("## Tag distribution")
+            lines.append("")
+            lines.append(
+                " · ".join(f"`{t}` ({n})" for t, n in top_tags)
+            )
+            lines.append("")
+
+        # 4. By adversary generation
         by_gen: Dict[int, List[Lesson]] = {}
         for ls in self._lessons:
             by_gen.setdefault(ls.adversary_gen, []).append(ls)
 
-        gen_names = {1: "Script Kiddie", 2: "Adaptive", 3: "Deceptive APT", 4: "Live LLM Adversary"}
+        gen_names = {
+            1: "Script Kiddie",
+            2: "Adaptive",
+            3: "Deceptive APT",
+            4: "Live LLM Adversary",
+        }
+        lines.append("## By adversary generation")
+        lines.append("")
         for gen in sorted(by_gen.keys()):
             lessons = sorted(by_gen[gen], key=lambda x: x.utility, reverse=True)
             n = len(lessons)
             noun = "lesson" if n == 1 else "lessons"
-            lines.append(f"## Gen {gen} — {gen_names.get(gen, 'Unknown')}  ({n} {noun})")
+            lines.append(f"### Gen {gen} — {gen_names.get(gen, 'Unknown')}  ({n} {noun})")
             lines.append("")
             for ls in lessons:
                 tags = " ".join(f"`{t}`" for t in ls.tags)

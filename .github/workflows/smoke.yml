@@ -1,0 +1,47 @@
+name: smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  demo-export:
+    name: demo export + single-episode walkthrough
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run demo export
+        run: python scripts/demo_export.py
+
+      - name: Verify demo artifacts exist
+        run: |
+          test -s playbook_export.md
+          test -s playbook_demo.json
+          # Sanity: artifact references the new sections introduced by the
+          # enriched as_markdown() — fail loudly if those regressed.
+          grep -q "## Tag distribution" playbook_export.md
+          grep -q "## By adversary generation" playbook_export.md
+
+      - name: Run single-episode walkthrough
+        run: python examples/single_episode.py
+
+      - name: Confirm Python imports cleanly
+        run: |
+          python -c "import models, environment, playbook, governance, trust, adversary, reward, dynamics, tasks, baseline, inference"

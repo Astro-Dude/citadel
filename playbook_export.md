@@ -5,53 +5,75 @@
 
 ## Runs
 
-| Task | Adversary Gen | Steps | Data Exfiltrated |
-|---|---|---|---|
-| `easy_1` | Gen 1 | 12 | 0.0 |
-| `medium_1` | Gen 2 | 12 | 0.558 |
-| `hard_1` | Gen 3 | 5 | 1.0 |
-| `hard_2` | Gen 3 | 12 | 0.858 |
+| Task | Adversary Gen | Steps | Data Exfiltrated | Lessons Cited |
+|---|---|---|---|---|
+| `easy_1` | Gen 1 | 12 | 0.0 | 8 |
+| `medium_1` | Gen 2 | 12 | 0.56 | 6 |
+| `hard_1` | Gen 1 | 7 | 1.0 | 4 |
+| `hard_1` | Gen 2 | 5 | 1.0 | 1 |
+| `hard_1` | Gen 3 | 7 | 1.0 | 5 |
+
+## Playbook mechanic — end-of-run snapshot
+
+- 4 of 10 lessons cited at least once
+- 23 total citations across the council's runs
+- 10W / 13L on cited lessons (env auto-records via `Playbook.record_outcome` on each cited step)
 
 # Citadel Council Playbook
 
-_10 lessons · 10 with positive utility · 0 cited at least once · avg utility +0.10_
+_10 lessons · 7 with positive utility · 4 cited at least once · 23 total citations · 10W/13L · avg utility +0.11_
 
-## Gen 1 — Script Kiddie  (3 lessons)
+## Top cited
 
+| Lesson | Citations | W/L | Utility |
+|---|---|---|---|
+| **L-0001** — [Gen 1 / file_server] Destructive actions on data systems require investigate... | 10 | 4W/6L | -0.20 |
+| **L-0002** — [Gen 1 / workstations] Monitoring deployed without an open ServiceNow ticket ... | 8 | 3W/5L | -0.25 |
+| **L-0004** — [Gen 2 / file_server] Destructive actions on data systems require investigate... | 4 | 2W/2L | +0.00 |
+| **L-0005** — [Gen 2 / workstations] Monitoring deployed without an open ServiceNow ticket ... | 1 | 1W/0L | +1.00 |
+
+## Tag distribution
+
+`retrospective` (5) · `data_system` (3) · `catastrophic` (3) · `task_hard_1` (3) · `gen_1_script` (2) · `low_confidence_alert` (2) · `endpoint` (2) · `gen_1` (2)
+
+## By adversary generation
+
+### Gen 1 — Script Kiddie  (4 lessons)
+
+- **L-0007** — [retrospective] Baseline council on hard_1 vs Gen 1 ended catastrophic after 7 steps (exfil=1.00). Trained policy should improve on this floor.
+  _utility +0.10 · 0W/0L · cited 0× · task `hard_1` · hour 7_  
+  `catastrophic` `gen_1` `retrospective` `task_hard_1`
 - **L-0003** — [retrospective] Baseline council on easy_1 vs Gen 1 ended contained after 12 steps (exfil=0.00). Trained policy should improve on this floor.
   _utility +0.10 · 0W/0L · cited 0× · task `easy_1` · hour 12_  
   `contained` `gen_1` `retrospective` `task_easy_1`
-- **L-0002** — [Gen 1 / workstations] Monitoring deployed without an open ServiceNow ticket wastes a step — sequence governance (open_servicenow_incident) first on P1 scenarios.
-  _utility +0.10 · 0W/0L · cited 0× · task `easy_1` · hour 3_  
-  `endpoint` `gen_1_script`
 - **L-0001** — [Gen 1 / file_server] Destructive actions on data systems require investigate() first — veto when uninvestigated regardless of alert volume.
-  _utility +0.10 · 0W/0L · cited 0× · task `easy_1` · hour 2_  
-  `data_system` `gen_1_script`
+  _utility -0.20 · 4W/6L · cited 10× · task `easy_1` · hour 2_  
+  `data_system` `gen_1_script` `low_confidence_alert`
+- **L-0002** — [Gen 1 / workstations] Monitoring deployed without an open ServiceNow ticket wastes a step — sequence governance (open_servicenow_incident) first on P1 scenarios.
+  _utility -0.25 · 3W/5L · cited 8× · task `easy_1` · hour 3_  
+  `endpoint` `gen_1_script`
 
-## Gen 2 — Adaptive  (3 lessons)
+### Gen 2 — Adaptive  (4 lessons)
 
+- **L-0005** — [Gen 2 / workstations] Monitoring deployed without an open ServiceNow ticket wastes a step — sequence governance (open_servicenow_incident) first on P1 scenarios.
+  _utility +1.00 · 1W/0L · cited 1× · task `medium_1` · hour 3_  
+  `endpoint` `gen_2_adaptive` `low_confidence_alert`
 - **L-0006** — [retrospective] Baseline council on medium_1 vs Gen 2 ended degraded after 12 steps (exfil=0.56). Trained policy should improve on this floor.
   _utility +0.10 · 0W/0L · cited 0× · task `medium_1` · hour 12_  
   `degraded` `gen_2` `retrospective` `task_medium_1`
-- **L-0005** — [Gen 2 / workstations] Monitoring deployed without an open ServiceNow ticket wastes a step — sequence governance (open_servicenow_incident) first on P1 scenarios.
-  _utility +0.10 · 0W/0L · cited 0× · task `medium_1` · hour 3_  
-  `endpoint` `gen_2_adaptive` `high_confidence_alert`
-- **L-0004** — [Gen 2 / file_server] Destructive actions on data systems require investigate() first — veto when uninvestigated regardless of alert volume.
-  _utility +0.10 · 0W/0L · cited 0× · task `medium_1` · hour 2_  
-  `data_system` `gen_2_adaptive` `high_confidence_alert`
-
-## Gen 3 — Deceptive APT  (4 lessons)
-
-- **L-0010** — [retrospective] Baseline council on hard_2 vs Gen 3 ended catastrophic after 12 steps (exfil=0.86). Trained policy should improve on this floor.
-  _utility +0.10 · 0W/0L · cited 0× · task `hard_2` · hour 12_  
-  `catastrophic` `gen_3` `retrospective` `task_hard_2`
-- **L-0009** — [retrospective] Baseline council on hard_1 vs Gen 3 ended catastrophic after 5 steps (exfil=1.00). Trained policy should improve on this floor.
+- **L-0008** — [retrospective] Baseline council on hard_1 vs Gen 2 ended catastrophic after 5 steps (exfil=1.00). Trained policy should improve on this floor.
   _utility +0.10 · 0W/0L · cited 0× · task `hard_1` · hour 5_  
+  `catastrophic` `gen_2` `retrospective` `task_hard_1`
+- **L-0004** — [Gen 2 / file_server] Destructive actions on data systems require investigate() first — veto when uninvestigated regardless of alert volume.
+  _utility +0.00 · 2W/2L · cited 4× · task `medium_1` · hour 2_  
+  `data_system` `gen_2_adaptive` `medium_confidence_alert`
+
+### Gen 3 — Deceptive APT  (2 lessons)
+
+- **L-0011** — [retrospective] Baseline council on hard_1 vs Gen 3 ended catastrophic after 7 steps (exfil=1.00). Trained policy should improve on this floor.
+  _utility +0.10 · 0W/0L · cited 0× · task `hard_1` · hour 7_  
   `catastrophic` `gen_3` `retrospective` `task_hard_1`
-- **L-0008** — [Gen 3 / workstations] Monitoring deployed without an open ServiceNow ticket wastes a step — sequence governance (open_servicenow_incident) first on P1 scenarios.
-  _utility +0.10 · 0W/0L · cited 0× · task `hard_1` · hour 3_  
-  `endpoint` `gen_3_deceptive` `medium_confidence_alert`
-- **L-0007** — [Gen 3 / file_server] Destructive actions on data systems require investigate() first — veto when uninvestigated regardless of alert volume.
+- **L-0009** — [Gen 3 / file_server] Destructive actions on data systems require investigate() first — veto when uninvestigated regardless of alert volume.
   _utility +0.10 · 0W/0L · cited 0× · task `hard_1` · hour 2_  
   `data_system` `gen_3_deceptive`
 
