@@ -874,6 +874,7 @@ class CitadelEnvironment(Environment[IncidentAction, IncidentObservation, Incide
             last_oversight_critique=self._last_critique,
         )
         obs.oversight_reward = oversight_reward
+        obs.metadata = info
         return obs
 
     # --- helpers ----------------------------------------------------------

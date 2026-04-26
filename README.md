@@ -237,6 +237,17 @@ Load a real run: click **LOAD JSON** and pick any `runs/<run_id>/dashboard.json`
 python dashboard.py
 ```
 
+### Benchmark: Qwen2.5-72B-Instruct untrained (run `20260426T100031-Qwen-Qwen2.5-72B-Instruct`)
+
+| Task | Score | Steps | Adversary Gen | Termination |
+|---|---|---|---|---|
+| `easy_1` | **0.539** | 12 | Gen 1 | time_expired |
+| `medium_1` | 0.481 | 12 | Gen 2 | time_expired |
+| `hard_1` | 0.315 | 12 | Gen 3 | time_expired |
+| **avg** | **0.445** | — | — | — |
+
+Gen 3 adversary (deceptive APT) scores drop significantly vs easy — consistent with the trained council's targeted improvement on Gen 3 scenarios. Oversight VETOed destructive actions until proper governance prerequisites were met (council protocol working correctly).
+
 ### Benchmark: Gemma 7B untrained (run `20260419T220811-gemma-7b-untrained`)
 
 | Task | Score | Steps | Termination |
@@ -273,43 +284,36 @@ Writes:
 
 ## File layout
 
-```
-Citadel/
-├── models.py               # Pydantic action/obs/state types
-├── governance.py           # 6 enterprise-app simulators + pre-req + compliance score
-├── trust.py                # Bidirectional trust dynamics (Theme 5)
-├── playbook.py             # Shared lessons memory with utility decay (Theme 4)
-├── adversary.py            # 3 scripted adversary generations (Theme 4 curriculum)
-├── adversary_llm.py        # Gen 4: live LLM adversary (COZY_SKIPPER directive loop)
-├── dynamics.py             # Attacker sim + apply_action (method/scope/rollback branches)
-├── environment.py          # Two-agent council step loop + feature flags
-├── stakeholder_events.py   # CEO/CFO/Legal/Board pressure events
-├── ablation.py             # 7-condition feature ablation harness (no LLM, ~0.2s/56 eps)
-├── recorder.py             # Per-step transcript + dashboard.json persistence
-├── dashboard.py            # Self-contained HTML dashboard generator
-├── oversight_env.py        # Oversight-perspective wrapper for Phase 2 training
-├── reward.py               # Commander / Oversight / Joint final score
-├── baseline.py             # Commander baselines (no_op, naive) + Oversight baselines
-├── tasks.py                # 4 scenarios (easy_1/medium_1/hard_1/hard_2)
-├── client.py               # CitadelEnv OpenEnv client
-├── inference.py            # Drives both LLMs through all tasks
-├── investor_agent.py       # Investor/board agent (OpenAI-compat, works with Ollama)
-├── server/app.py           # FastAPI server (OpenEnv compliant)
-├── docs/
-│   ├── design.md           # Architecture & design decisions
-│   ├── plan.md             # Module breakdown & implementation status
-│   └── training.md         # Training pipeline guide
-├── training/
-│   ├── grpo_train.py       # Phase 1 + Phase 2 GRPO training script
-│   ├── eval_before_after.py# Before/after evaluation
-│   └── *.ipynb             # Analysis notebooks
-├── scripts/demo_export.py  # No-LLM baseline run → playbook_export.md
-├── playbook_export.md      # Pre-committed baseline playbook (judges can read without running)
-├── runs/
-│   ├── dashboard.html      # Combined 6-tab SOC dashboard (self-contained)
-│   └── <run_id>/           # Per-run: transcript.json, transcript.md, dashboard.json
-└── Dockerfile, openenv.yaml, pyproject.toml, requirements.txt
-```
+| File | Purpose |
+|---|---|
+| [models.py](models.py) | Pydantic action/obs/state types |
+| [governance.py](governance.py) | 6 enterprise-app simulators + pre-req + compliance score |
+| [trust.py](trust.py) | Bidirectional trust dynamics (Theme 5) |
+| [playbook.py](playbook.py) | Shared lessons memory with utility decay (Theme 4) |
+| [adversary.py](adversary.py) | 3 scripted adversary generations (Theme 4 curriculum) |
+| [adversary_llm.py](adversary_llm.py) | Gen 4: live LLM adversary (COZY_SKIPPER directive loop) |
+| [dynamics.py](dynamics.py) | Attacker sim + apply_action (method/scope/rollback branches) |
+| [environment.py](environment.py) | Two-agent council step loop + feature flags |
+| [stakeholder_events.py](stakeholder_events.py) | CEO/CFO/Legal/Board pressure events |
+| [ablation.py](ablation.py) | 7-condition feature ablation harness (no LLM, ~0.2s/56 eps) |
+| [recorder.py](recorder.py) | Per-step transcript + dashboard.json persistence |
+| [dashboard.py](dashboard.py) | Self-contained HTML dashboard generator |
+| [oversight_env.py](oversight_env.py) | Oversight-perspective wrapper for Phase 2 training |
+| [reward.py](reward.py) | Commander / Oversight / Joint final score |
+| [baseline.py](baseline.py) | Commander baselines (no_op, naive) + Oversight baselines |
+| [tasks.py](tasks.py) | 4 scenarios (easy_1/medium_1/hard_1/hard_2) |
+| [client.py](client.py) | CitadelEnv OpenEnv client |
+| [inference.py](inference.py) | Drives both LLMs through all tasks |
+| [investor_agent.py](investor_agent.py) | Investor/board agent (OpenAI-compat, works with Ollama) |
+| [server/app.py](server/app.py) | FastAPI server (OpenEnv compliant) |
+| [docs/results.md](docs/results.md) | Hackathon-aligned training results |
+| [docs/training.md](docs/training.md) | Training pipeline guide |
+| [docs/design.md](docs/design.md) | Architecture & design decisions |
+| [training/grpo_train.py](training/grpo_train.py) | Phase 1 + Phase 2 GRPO training script |
+| [training/eval_before_after.py](training/eval_before_after.py) | Before/after evaluation |
+| [scripts/demo_export.py](scripts/demo_export.py) | No-LLM baseline run → playbook_export.md |
+| [playbook_export.md](playbook_export.md) | Pre-committed baseline playbook (judges can read without running) |
+| [runs/dashboard.html](runs/dashboard.html) | Combined 6-tab SOC dashboard (self-contained) |
 
 ## Judging angles
 

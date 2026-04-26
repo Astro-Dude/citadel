@@ -540,6 +540,7 @@ class IncidentObservation(Observation):
     done: bool = False
     reward: Optional[float] = None
     oversight_reward: Optional[float] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class OversightObservation(Observation):
