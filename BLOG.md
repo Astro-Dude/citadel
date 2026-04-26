@@ -93,10 +93,10 @@ final_score = 0.40 × incident_outcome
 On a catastrophic breach `governance_compliance`, `efficiency`, and `adversary_adaptation` are zeroed — they're moot once the incident is lost. Training is two-phase, on `Qwen2.5-3B-Instruct` with GRPO, 100 steps per phase. Phase one trains the Commander with Oversight frozen; phase two trains Oversight with the Commander frozen. The separation stabilizes learning — each agent learns its role against a fixed counterpart, and they meet again in evaluation.
 
 **Commander reward curve — 100 steps GRPO**
-![Commander reward curve](https://raw.githubusercontent.com/Astro-Dude/citadel/main/docs/results/commander_reward_curve.png)
+![Commander reward curve](docs/results/commander_reward_curve.png)
 
 **Oversight reward curve — 100 steps GRPO**
-![Oversight reward curve](https://raw.githubusercontent.com/Astro-Dude/citadel/main/docs/results/oversight_reward_curve.png)
+![Oversight reward curve](docs/results/oversight_reward_curve.png)
 
 | Phase | Before Training | After Training | Peak | Improvement | Checkpoint |
 |-------|----------------|----------------|------|-------------|------------|
