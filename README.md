@@ -21,15 +21,19 @@ tags:
 
 > Bastion defended. Sentinel supervised. **Citadel is an LLM council** that governs, critiques, co-evolves, and earns trust.
 
-**[🚀 Live Demo](https://huggingface.co/spaces/Astro-Dude/citadel)** | **[📊 Training Results](docs/results.md)** | **[📖 Training Guide](docs/training.md)**
+**[🚀 Live Demo](https://huggingface.co/spaces/Astro-Dude/citadel)** | **[📊 Training Results](docs/results.md)** | **[📖 Training Guide](docs/training.md)** | **[📓 Colab Notebook](https://colab.research.google.com/drive/1VnZKoESxKa9AX24Q9w2UKwhpLaCdOxvw?usp=sharing)**
 
-### Training Results (Qwen2.5-3B-Instruct, 120 steps GRPO)
-| Phase | Before Training | After Training | Improvement |
-|-------|----------------|----------------|-------------|
-| Commander | -0.326 (env crash) | +0.082 avg | **+0.41** |
-| Oversight | -0.145 (wrong reward) | +0.134 avg | **+0.28** |
+### Training Results (Qwen2.5-3B-Instruct, 100 steps GRPO)
+| Phase | Before Training | After Training | Peak | Improvement | Checkpoint |
+|-------|----------------|----------------|------|-------------|------------|
+| Commander | ~0.055 (start) | ~0.124 rolling avg | ~0.156 | **+0.07** | `checkpoints/qwen-2.5-3b/commander/` |
+| Oversight | ~0.154 (start) | ~0.233 rolling avg | ~0.249 | **+0.08** | `checkpoints/qwen-2.5-3b/oversight/` |
 
+**Commander reward curve — 100 steps GRPO**
 ![Commander Reward Curve](docs/results/commander_reward_curve.png)
+
+**Oversight reward curve — 100 steps GRPO**
+![Oversight Reward Curve](docs/results/oversight_reward_curve.png)
 
 Citadel is the Round 2 submission for the Meta PyTorch × Scaler OpenEnv Hackathon. It extends our Round 1 project (Bastion) into a full enterprise SOC environment: two LLMs cooperate through a structured critique protocol, under real enterprise governance constraints, against four generations of adversary, while maintaining bidirectional trust and a shared lessons playbook.
 
