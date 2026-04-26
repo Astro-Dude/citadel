@@ -30,10 +30,10 @@ tags:
 | Oversight | ~0.154 (start) | ~0.233 rolling avg | ~0.249 | **+0.08** | `checkpoints/qwen-2.5-3b/oversight/` |
 
 **Commander reward curve — 100 steps GRPO**
-![Commander Reward Curve](docs/results/commander_reward_curve.png)
+![Commander Reward Curve](https://raw.githubusercontent.com/Astro-Dude/citadel/main/docs/results/commander_reward_curve.png)
 
 **Oversight reward curve — 100 steps GRPO**
-![Oversight Reward Curve](docs/results/oversight_reward_curve.png)
+![Oversight Reward Curve](https://raw.githubusercontent.com/Astro-Dude/citadel/main/docs/results/oversight_reward_curve.png)
 
 Citadel is the Round 2 submission for the Meta PyTorch × Scaler OpenEnv Hackathon. It extends our Round 1 project (Bastion) into a full enterprise SOC environment: two LLMs cooperate through a structured critique protocol, under real enterprise governance constraints, against four generations of adversary, while maintaining bidirectional trust and a shared lessons playbook.
 
